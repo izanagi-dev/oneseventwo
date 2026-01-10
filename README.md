@@ -12,3 +12,7 @@ A 2D action game built in Godot 4.
 * **Jump**: Space
 * **Dash**: Shift
 * **Stances**: 1 (Wind), 2 (Fire), 3 (Rock)
+
+# Ideas:
+- adjust the keys (1 idea is wasd movement, with direction keys as stances)
+- change enemies and projectiles
