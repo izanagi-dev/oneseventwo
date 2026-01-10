@@ -1,0 +1,10 @@
+# Godot-specific ignores
+.godot/
+*.translation
+*.import/
+# C# specific ignores
+.mono/
+bin/
+obj/
+# OS ignores
+.DS_Store
