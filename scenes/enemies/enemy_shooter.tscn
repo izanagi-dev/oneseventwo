@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3 uid="uid://vp8nxeh040ak"]
+[gd_scene load_steps=34 format=3 uid="uid://vp8nxeh040ak"]
 
 [ext_resource type="Script" uid="uid://dtckkw4vruxcr" path="res://scripts/enemy_shooter.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://ciqpusxpcsc4x" path="res://scenes/projectiles/projectile_wind.tscn" id="2_uy5cs"]
@@ -135,6 +135,9 @@ gradient = SubResource("Gradient_13pqv")
 fill = 1
 fill_from = Vector2(0.5140187, 0.5186916)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xk7f3"]
+size = Vector2(55, 108)
+
 [node name="EnemyShooter" type="CharacterBody2D"]
 script = ExtResource("1")
 projectile_wind = ExtResource("2_uy5cs")
@@ -157,3 +160,11 @@ shape = SubResource("RectangleShape2D_13pqv")
 
 [node name="AttackIndicator" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_xk7f3")
+
+[node name="EnemyHurtbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyHurtbox"]
+position = Vector2(0.5, 6)
+shape = SubResource("RectangleShape2D_xk7f3")

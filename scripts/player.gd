@@ -142,16 +142,18 @@ func apply_gravity(delta):
 
 # --- LEFT / RIGHT ---
 func handle_movement():
-	if is_dashing: # Removed "or is_attacking"
+	if is_dashing:
 		return
 
 	var direction := Input.get_axis("move_left", "move_right")
 	velocity.x = direction * SPEED
 
-	# Only flip the sprite if NOT attacking
-	# This prevents the character from "snapping" directions mid-swing
 	if direction != 0 and not is_attacking:
 		anim.flip_h = direction < 0
+		
+		# --- ADD THESE TWO LINES ---
+		# This flips the hitbox's position to match the direction
+		$SwordHitbox.scale.x = -1 if direction < 0 else 1
 
 # --- JUMP ---
 func handle_jump():
@@ -201,21 +203,25 @@ func handle_attack():
 		return
 
 	if Input.is_action_just_pressed("attack"):
-		# Optional: Flip sprite to match current input direction right as attack starts
-		var move_dir = Input.get_axis("move_left", "move_right")
-		if move_dir != 0:
-			anim.flip_h = move_dir < 0
-			
 		is_attacking = true
+		
+		# 1. Turn the hitbox ON right when the swing starts
+		$SwordHitbox/CollisionShape2D.disabled = false
+		
 		if attack_alt:
 			anim.play("attack 2")
 		else:
 			anim.play("attack 1")
 		
 		attack_alt = !attack_alt
+		
+		# 2. Wait for the duration of the animation
 		await get_tree().create_timer(ATTACK_TIME).timeout
+		
+		# 3. Turn the hitbox OFF so it stops killing things
+		$SwordHitbox/CollisionShape2D.disabled = true
 		is_attacking = false
-
+		
 # --- ANIMATIONS ---
 func update_animation():
 	# Priority 1: Attacks & Death (handled in their own functions)
@@ -238,3 +244,11 @@ func update_animation():
 		anim.play("walk")
 	else:
 		anim.play("idle")
+
+
+func _on_sword_hitbox_area_entered(area: Area2D) -> void:
+	# Check if the thing we hit is an enemy
+	if area.get_parent().has_method("take_sword_damage"):
+		area.get_parent().take_sword_damage()
+
+

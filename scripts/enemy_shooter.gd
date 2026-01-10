@@ -124,3 +124,10 @@ func telegraph_attack(target_color: Color):
 	# Fade out and shrink back right as the projectile fires
 	tween.tween_property(indicator, "modulate:a", 0.0, 0.1)
 	tween.parallel().tween_property(indicator, "scale", Vector2(1.0, 1.0), 0.1)
+
+
+func take_sword_damage():
+	# You can add a 'health' variable if you want them to take multiple hits
+	# For now, let's just make them vanish!
+	print("Enemy slain by Ronin!")
+	queue_free() # This removes the enemy from the game
