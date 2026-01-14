@@ -1,6 +1,13 @@
-[gd_scene load_steps=34 format=3 uid="uid://vp8nxeh040ak"]
+[gd_scene load_steps=40 format=3 uid="uid://vp8nxeh040ak"]
 
 [ext_resource type="Script" uid="uid://dtckkw4vruxcr" path="res://scripts/enemy_shooter.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/hurtbox.gd" id="hurtbox_script"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="health_script"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/projectile_base.tscn" id="2_projectile_base"]
+[ext_resource type="Resource" path="res://scenes/projectiles/defs/wind_bolt.tres" id="3_wind_def"]
+[ext_resource type="Resource" path="res://scenes/projectiles/defs/fire_bolt.tres" id="4_fire_def"]
+[ext_resource type="Resource" path="res://scenes/projectiles/defs/rock_shard.tres" id="5_rock_def"]
+[ext_resource type="Resource" path="res://scenes/projectiles/defs/homing_firebolt.tres" id="6_homing_def"]
 [ext_resource type="PackedScene" uid="uid://ciqpusxpcsc4x" path="res://scenes/projectiles/projectile_wind.tscn" id="2_uy5cs"]
 [ext_resource type="PackedScene" uid="uid://cwq0y5wx8i4yh" path="res://scenes/projectiles/projectile_fire.tscn" id="3_4urld"]
 [ext_resource type="PackedScene" uid="uid://uwke5qdpm3ap" path="res://scenes/projectiles/projectile_rock.tscn" id="4_rbpn5"]
@@ -140,9 +147,11 @@ size = Vector2(55, 108)
 
 [node name="EnemyShooter" type="CharacterBody2D"]
 script = ExtResource("1")
-projectile_wind = ExtResource("2_uy5cs")
-projectile_fire = ExtResource("3_4urld")
-projectile_rock = ExtResource("4_rbpn5")
+projectile_scene = ExtResource("2_projectile_base")
+wind_projectile = ExtResource("3_wind_def")
+fire_projectile = ExtResource("4_fire_def")
+rock_projectile = ExtResource("5_rock_def")
+homing_fire_projectile = ExtResource("6_homing_def")
 
 [node name="ShootPoint" type="Marker2D" parent="."]
 position = Vector2(66, -30)
@@ -161,10 +170,17 @@ shape = SubResource("RectangleShape2D_13pqv")
 [node name="AttackIndicator" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_xk7f3")
 
-[node name="EnemyHurtbox" type="Area2D" parent="."]
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("health_script")
+max_health = 1
+current_health = 1
+invulnerability_seconds_on_hit = 0.0
+[node name="Hurtbox" type="Area2D" parent="." groups=["enemy_hurtbox"]]
+script = ExtResource("hurtbox_script")
 collision_layer = 4
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyHurtbox"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 position = Vector2(0.5, 6)
 shape = SubResource("RectangleShape2D_xk7f3")

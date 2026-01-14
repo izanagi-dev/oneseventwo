@@ -17,6 +17,11 @@ config/features=PackedStringArray("4.5", "Forward Plus")
 [autoload]
 
 GameEnums="*res://scripts/autoloads/GameEnums.gd"
+Events="*res://scripts/autoloads/Events.gd"
+GameTime="*res://scripts/autoloads/GameTime.gd"
+SceneRouter="*res://scripts/autoloads/SceneRouter.gd"
+Game="*res://scripts/autoloads/Game.gd"
+MusicPlayer="*res://scenes/audio/MusicPlayer.tscn"
 
 [display]
 

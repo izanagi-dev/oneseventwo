@@ -1,4 +1,4 @@
-[gd_scene load_steps=58 format=3 uid="uid://qxmyyibtpfdp"]
+[gd_scene load_steps=61 format=3 uid="uid://qxmyyibtpfdp"]
 
 [ext_resource type="Script" uid="uid://rw3icighuej" path="res://scripts/player.gd" id="1_lvxji"]
 [ext_resource type="Texture2D" uid="uid://cakfa1sraeg1r" path="res://assets/player/Martial Hero/Sprites/Attack1.png" id="2_5gtgg"]
@@ -9,6 +9,9 @@
 [ext_resource type="Texture2D" uid="uid://dgroehdocrd7u" path="res://assets/player/Martial Hero/Sprites/Jump.png" id="7_ugbui"]
 [ext_resource type="Texture2D" uid="uid://bmk6nk3vha4qk" path="res://assets/player/Martial Hero/Sprites/Take Hit.png" id="8_fcs02"]
 [ext_resource type="Texture2D" uid="uid://c0ostql1x3uap" path="res://assets/player/Martial Hero/Sprites/Run.png" id="9_myrg7"]
+[ext_resource type="Script" uid="uid://dg2pbw7d7l2ru" path="res://scripts/components/health_component.gd" id="health_script"]
+[ext_resource type="Script" uid="uid://dm1u7yykgv0u5" path="res://scripts/combat/hitbox.gd" id="hitbox_script"]
+[ext_resource type="Script" uid="uid://c2ii3xnpp60o3" path="res://scripts/combat/hurtbox.gd" id="hurtbox_script"]
 
 [sub_resource type="Gradient" id="Gradient_5gtgg"]
 offsets = PackedFloat32Array(0, 0.79333335)
@@ -359,7 +362,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_gmlin"]
-size = Vector2(39, 96.52768)
+size = Vector2(39, 88.817245)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_yx3jh"]
 size = Vector2(31.842072, 146.84183)
@@ -385,13 +388,17 @@ animation = &"attack 1"
 frame_progress = 0.1931986
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(-1.1920929e-07, 13.815749)
+position = Vector2(-1.470582, 5.882328)
 scale = Vector2(0.8421055, 1.5955654)
 shape = SubResource("RectangleShape2D_gmlin")
 
-[node name="Hurtbox" type="Area2D" parent="."]
+[node name="Health" type="Node" parent="."]
+script = ExtResource("health_script")
+
+[node name="Hurtbox" type="Area2D" parent="." groups=["player_hurtbox"]]
 collision_layer = 4
 collision_mask = 8
+script = ExtResource("hurtbox_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 visible = false
@@ -401,10 +408,12 @@ shape = SubResource("RectangleShape2D_yx3jh")
 [node name="SwordHitbox" type="Area2D" parent="."]
 collision_layer = 0
 collision_mask = 4
+script = ExtResource("hitbox_script")
+damage = 999
+hitstop_seconds = 0.04
+hurtbox_group = &"enemy_hurtbox"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SwordHitbox"]
 position = Vector2(158.82286, -27.941055)
 shape = SubResource("RectangleShape2D_5gtgg")
 disabled = true
-
-[connection signal="area_entered" from="SwordHitbox" to="." method="_on_sword_hitbox_area_entered"]

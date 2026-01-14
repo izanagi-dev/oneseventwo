@@ -1,4 +1,4 @@
-extends CharacterBody2D
+extends Actor
 
 @export var speed: float = 300.0
 @export var shoot_interval: float = 1.2
@@ -6,19 +6,32 @@ extends CharacterBody2D
 @export var stop_threshold: float = 50.0 # Increased for smoother movement
 @export var gravity: float = 2000.0
 
-@export var projectile_wind: PackedScene
-@export var projectile_fire: PackedScene
-@export var projectile_rock: PackedScene
+# Projectile system (data-driven)
+@export var projectile_scene: PackedScene
+@export var wind_projectile: ProjectileDefinition
+@export var fire_projectile: ProjectileDefinition
+@export var rock_projectile: ProjectileDefinition
+# Optional example: assign a homing definition to enable homing shots
+@export var homing_fire_projectile: ProjectileDefinition
 
 @onready var shoot_point: Marker2D = $ShootPoint
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
+@onready var indicator: Sprite2D = $AttackIndicator
 
 var player: CharacterBody2D = null
 var is_attacking := false
 
+var _shooting: bool = false
+
 func _ready() -> void:
+	super._ready()
 	randomize()
-	_shoot_loop()
+	if not _shooting:
+		_shooting = true
+		_shoot_loop.call_deferred()
+
+func _exit_tree() -> void:
+	_shooting = false
 
 func _physics_process(delta: float) -> void:
 	# 1. Apply Gravity
@@ -41,7 +54,7 @@ func _physics_process(delta: float) -> void:
 		var distance = vector_to_player.length()
 		var direction_vector = vector_to_player.normalized()
 
-		# Maintain 800px distance
+		# Maintain target distance
 		if distance > target_distance + stop_threshold:
 			velocity.x = direction_vector.x * speed
 		elif distance < target_distance - stop_threshold:
@@ -62,7 +75,7 @@ func _physics_process(delta: float) -> void:
 
 func update_animations() -> void:
 	if is_attacking:
-		return 
+		return
 
 	if abs(velocity.x) > 10:
 		anim.play("walk")
@@ -70,64 +83,90 @@ func update_animations() -> void:
 		anim.play("idle")
 
 func _shoot_loop() -> void:
-	while true:
+	while _shooting and is_inside_tree() and not is_dying and (health == null or not health.is_dead):
 		await get_tree().create_timer(shoot_interval).timeout
-		if player and is_on_floor(): # Only shoot if player found and enemy is grounded
+		if not _shooting or not is_inside_tree() or is_dying or (health and health.is_dead):
+			break
+		if player and is_on_floor():
 			await shoot_random()
-
-@onready var indicator: Sprite2D = $AttackIndicator
 
 func shoot_random() -> void:
 	is_attacking = true
-	
-	# 1. Determine style and color first
-	var scenes = [
-		{"scene": projectile_wind, "style": GameEnums.Style.MELEE, "color": Color.WHITE},
-		{"scene": projectile_fire, "style": GameEnums.Style.MISSILES, "color": Color.RED},
-		{"scene": projectile_rock, "style": GameEnums.Style.MAGIC, "color": Color.SANDY_BROWN}
-	]
-	var choice = scenes.pick_random()
-	
-	# 2. Telegraph the attack
+
+	# Build options list from the definitions you assigned in the inspector.
+	var options: Array = []
+	if wind_projectile:
+		options.append({"def": wind_projectile, "color": Color.WHITE})
+	if fire_projectile:
+		options.append({"def": fire_projectile, "color": Color.RED})
+	if rock_projectile:
+		options.append({"def": rock_projectile, "color": Color.SANDY_BROWN})
+	if homing_fire_projectile:
+		options.append({"def": homing_fire_projectile, "color": Color.RED})
+
+	if options.is_empty() or projectile_scene == null:
+		push_warning("EnemyShooter: projectile_scene or projectile definitions not set.")
+		is_attacking = false
+		return
+
+	var choice = options.pick_random()
+	var defn: ProjectileDefinition = choice["def"]
+
+	# Telegraph the attack
 	telegraph_attack(choice["color"])
-	
-	# Wait for the telegraph to finish (sync with your animation)
+
+	# Sync with your animation
 	var attack_anim = ["attack 1", "attack 2"].pick_random()
 	anim.play(attack_anim)
-	
-	await get_tree().create_timer(0.4).timeout 
+	await get_tree().create_timer(0.4).timeout
 
-	# 3. Spawn the projectile (using your existing logic)
-	if choice["scene"]:
-		var projectile = choice["scene"].instantiate()
-		projectile.attack_style = choice["style"]
-		var shoot_dir = (player.global_position - shoot_point.global_position).normalized()
+	# Spawn projectile
+	var shoot_dir: Vector2 = (player.global_position - shoot_point.global_position).normalized()
+	var projectile = projectile_scene.instantiate()
+	get_tree().current_scene.add_child(projectile)
+
+	if projectile.has_method("initialize"):
+		projectile.initialize(defn, shoot_point.global_position, shoot_dir, self, player)
+	else:
+		# Fallback: support old projectile scenes
+		projectile.global_position = shoot_point.global_position
+		if "attack_style" in projectile:
+			projectile.attack_style = defn.attack_style
+		if "damage" in projectile:
+			projectile.damage = defn.damage
+		if "speed" in projectile:
+			projectile.speed = defn.speed
 		if "direction" in projectile:
 			projectile.direction = shoot_dir
-		get_tree().current_scene.add_child(projectile)
-		projectile.global_position = shoot_point.global_position
 
-	await get_tree().create_timer(0.3).timeout 
+	await get_tree().create_timer(0.3).timeout
 	is_attacking = false
 
-func telegraph_attack(target_color: Color):
-	# Set the color but keep it transparent initially
+func telegraph_attack(target_color: Color) -> void:
 	indicator.modulate = target_color
 	indicator.modulate.a = 0
-	
-	# Create a quick fade-in/fade-out glow effect
+
 	var tween = create_tween()
-	# Fade in to 0.8 opacity over 0.2 seconds
+	# Fade in
 	tween.tween_property(indicator, "modulate:a", 0.8, 0.2)
-	# Grow the indicator slightly
+	# Grow
 	tween.parallel().tween_property(indicator, "scale", Vector2(1.5, 1.5), 0.2)
-	# Fade out and shrink back right as the projectile fires
+	# Fade out
 	tween.tween_property(indicator, "modulate:a", 0.0, 0.1)
 	tween.parallel().tween_property(indicator, "scale", Vector2(1.0, 1.0), 0.1)
 
+func _on_damaged(_damage_info: DamageInfo, _attacker: Node = null) -> void:
+	# For now enemies die in one hit, so this usually won't run unless you raise max_health.
+	# You can add hit flash / stagger here later.
+	pass
 
-func take_sword_damage():
-	# You can add a 'health' variable if you want them to take multiple hits
-	# For now, let's just make them vanish!
-	print("Enemy slain by Ronin!")
-	queue_free() # This removes the enemy from the game
+func _on_died(damage_info: DamageInfo, attacker: Node = null) -> void:
+	super._on_died(damage_info, attacker)
+	_shooting = false
+	queue_free()
+
+func take_sword_damage() -> void:
+	var d: DamageInfo = DamageInfo.new()
+	d.attack_style = GameEnums.Style.MELEE
+	d.damage = 999
+	receive_hit(d, null)
