@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3 uid="uid://cwq0y5wx8i4yh"]
+
+[ext_resource type="Script" uid="uid://c22ltrurup85w" path="res://scripts/projectile.gd" id="1"]
+
+[sub_resource type="Gradient" id="Gradient_es3sy"]
+offsets = PackedFloat32Array(0, 0.013333334, 0.99333334, 1)
+colors = PackedColorArray(0.7607843, 0, 0, 1, 0.78431374, 0, 0.24705882, 1, 0.9254902, 0, 0.15686275, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_um6pf"]
+gradient = SubResource("Gradient_es3sy")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bfm5a"]
+size = Vector2(20, 4)
+
+[node name="Projectile" type="Area2D"]
+collision_layer = 8
+collision_mask = 4
+script = ExtResource("1")
+speed = 600.0
+attack_style = 3
+
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.31679475, 0.06787186)
+texture = SubResource("GradientTexture2D_um6pf")
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_bfm5a")

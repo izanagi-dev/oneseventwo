@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://dygljkrr6mlsb"]
+
+[ext_resource type="AudioStream" uid="uid://doy2xt6kg2v12" path="res://assets/audio/music/sevenonetwo_bg_audio_1.mp3" id="1_yvkaf"]
+
+[node name="MusicPlayer" type="AudioStreamPlayer"]
+stream = ExtResource("1_yvkaf")
+volume_db = -26.714
+autoplay = true

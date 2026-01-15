@@ -1,0 +1,41 @@
+[gd_scene load_steps=7 format=3 uid="uid://tfiy5oseiysg"]
+
+[ext_resource type="Script" path="res://scripts/vfx/landing_dust.gd" id="1_hoesh"]
+
+[sub_resource type="Gradient" id="Gradient_g6j3t"]
+offsets = PackedFloat32Array(0.56, 1)
+colors = PackedColorArray(0.24111551, 0.11262066, 0.011683234, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_hoesh"]
+gradient = SubResource("Gradient_g6j3t")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.48598132, 0.5046729)
+fill_to = Vector2(0.8364486, 0.8411215)
+
+[sub_resource type="Curve" id="Curve_sdppw"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.9924243, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_dj572"]
+curve = SubResource("Curve_sdppw")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1wj86"]
+particle_flag_disable_z = true
+direction = Vector3(1, -1, 0)
+spread = 180.0
+initial_velocity_min = 20.0
+initial_velocity_max = 60.0
+gravity = Vector3(0, 150, 0)
+scale_min = 0.099999994
+scale_max = 0.29999998
+scale_curve = SubResource("CurveTexture_dj572")
+
+[node name="LandingDust" type="GPUParticles2D"]
+emitting = false
+texture = SubResource("GradientTexture2D_hoesh")
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_1wj86")
+script = ExtResource("1_hoesh")

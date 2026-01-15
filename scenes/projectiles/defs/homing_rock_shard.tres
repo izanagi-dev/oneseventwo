@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ProjectileDefinition" load_steps=6 format=3 uid="uid://gnn8se5hdat0"]
+
+[ext_resource type="Script" uid="uid://chqc8nnj6lakm" path="res://scripts/projectiles/movement/homing_movement.gd" id="1_bfbum"]
+[ext_resource type="Script" uid="uid://c3tlv0ktycic7" path="res://scripts/projectiles/projectile_definition.gd" id="2_rtk8i"]
+[ext_resource type="Texture2D" uid="uid://c78ujyy8npdl6" path="res://assets/projectiles/fire_gradient.tres" id="3_doqox"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/visuals/rock_beam_visual.tscn" id="4_bfbum"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("1_bfbum")
+turn_speed_radians_per_sec = 2.0
+max_seek_range = 1200.0
+
+[resource]
+script = ExtResource("2_rtk8i")
+display_name = "Homing Firebolt"
+attack_style = 2
+camera_shake = 20.0
+speed = 250.0
+lifetime_seconds = 6.0
+movement = SubResource("Resource_1")
+visual_scene = ExtResource("4_bfbum")
+texture = ExtResource("3_doqox")
+sprite_scale = Vector2(0.31679475, 0.06787186)

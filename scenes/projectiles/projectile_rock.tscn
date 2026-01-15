@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://uwke5qdpm3ap"]
+
+[ext_resource type="Script" uid="uid://c22ltrurup85w" path="res://scripts/projectile.gd" id="1"]
+
+[sub_resource type="Gradient" id="Gradient_rock"]
+colors = PackedColorArray(0.7135827, 0.5616193, 0.46180886, 1, 0.7137255, 0.56078434, 0.4627451, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_rock"]
+gradient = SubResource("Gradient_rock")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rock"]
+size = Vector2(20, 4)
+
+[node name="Projectile2" type="Area2D"]
+collision_layer = 8
+collision_mask = 4
+script = ExtResource("1")
+speed = 400.0
+
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.31679475, 0.06787186)
+texture = SubResource("GradientTexture2D_rock")
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_rock")
