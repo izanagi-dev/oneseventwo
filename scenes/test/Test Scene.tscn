@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://dfpcpmtpql5ue"]
+[gd_scene load_steps=15 format=3 uid="uid://dfpcpmtpql5ue"]
 
 [ext_resource type="Script" uid="uid://cyspqdtfudhwj" path="res://scenes/test/camera_2d.gd" id="1_0j3g4"]
 [ext_resource type="PackedScene" uid="uid://qxmyyibtpfdp" path="res://scenes/player/player.tscn" id="1_pj1fe"]
@@ -8,6 +8,9 @@
 [ext_resource type="PackedScene" uid="uid://vp8nxeh040ak" path="res://scenes/enemies/enemy_shooter.tscn" id="4_p8mvh"]
 [ext_resource type="Texture2D" uid="uid://c5qgr658nj3ri" path="res://assets/world/japan-neighborhood-platformer-tileset/Background.png" id="5_plag3"]
 [ext_resource type="Texture2D" uid="uid://ctf4vvhb56o6y" path="res://assets/world/japan-neighborhood-platformer-tileset/Sky.png" id="8_xqc3n"]
+[ext_resource type="PackedScene" path="res://scenes/ui/parry_hud.tscn" id="9_parryhud"]
+[ext_resource type="Script" path="res://scripts/levels/death_plane.gd" id="10_deathplane"]
+
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0j3g4"]
 texture = ExtResource("2_qxxbl")
@@ -240,6 +243,9 @@ physics_layer_0/collision_layer = 1
 sources/0 = SubResource("TileSetAtlasSource_0j3g4")
 sources/6 = SubResource("TileSetAtlasSource_3nbrd")
 sources/8 = SubResource("TileSetAtlasSource_6568d")
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_deathplane"]
+size = Vector2(20000, 200)
+
 
 [node name="TestScene" type="Node2D"]
 
@@ -283,6 +289,17 @@ target_distance = 600.0
 
 [node name="EnemyShooter" parent="." instance=ExtResource("4_p8mvh")]
 position = Vector2(2547, 969)
+[node name="DeathPlane" type="Area2D" parent="."]
+position = Vector2(3000, 1800)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("10_deathplane")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DeathPlane"]
+shape = SubResource("RectangleShape2D_deathplane")
+
+[node name="ParryHUD" parent="." instance=ExtResource("9_parryhud")]
+
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = -309

@@ -1,23 +1,45 @@
 extends Area2D
 
-@export var speed: float = 900.0
-@export var attack_style: GameEnums.Style = GameEnums.Style.MELEE
-@export var damage: int = 1
+# Legacy straight-line projectile script kept for older scenes.
+# New combat pipeline prefers ProjectileBase + ProjectileDefinition resources.
 
-var direction: Vector2 = Vector2.RIGHT
+@export var attack_style: GameEnums.Style = GameEnums.Style.MISSILES
+@export var damage: int = 1
+@export var speed: float = 800.0
+@export var camera_shake: float = 0.0
+@export var hurtbox_group: StringName = &"player_hurtbox"
+
+var direction := Vector2.RIGHT
+var shooter: Node = null
 
 func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
-func _physics_process(delta: float) -> void:
-	# Use global_position to ensure it moves in world space, 
-	# independent of any parent offsets.
-	global_position += direction * speed * delta
+func init(dir: Vector2, shooter_node: Node = null) -> void:
+	direction = dir.normalized()
+	shooter = shooter_node
 
-func _on_area_entered(area: Area2D):
-	if area.is_in_group("player_hurtbox"):
-		# Access the player script (the parent of the hurtbox)
-		var player = area.get_parent() 
-		if player.has_method("take_damage"):
-			player.take_damage(attack_style, damage)
-			queue_free() # Destroy projectile on hit
+func _physics_process(delta: float) -> void:
+	position += direction * speed * delta
+
+func _on_area_entered(area: Area2D) -> void:
+	# Shooter can be freed while a projectile is still alive (death/restart). Guard it.
+	var attacker: Node = null
+	if shooter != null and is_instance_valid(shooter):
+		attacker = shooter
+	if attacker != null and area.get_parent() == attacker:
+		return
+	if hurtbox_group != &"" and not area.is_in_group(hurtbox_group):
+		return
+
+	var dmg: DamageInfo = DamageInfo.new()
+	dmg.attack_style = attack_style
+	dmg.damage = damage
+	dmg.camera_shake = camera_shake
+
+	if area.has_method("apply_hit"):
+		area.apply_hit(dmg, attacker)
+	elif area.get_parent() != null and area.get_parent().has_method("receive_hit"):
+		area.get_parent().receive_hit(dmg, attacker)
+
+	queue_free()
