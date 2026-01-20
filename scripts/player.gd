@@ -2,7 +2,7 @@ extends Actor
 
 # --- CONSTANTS ---
 const SPEED: float = 650.0
-const JUMP_VELOCITY: float = -800.0
+const JUMP_VELOCITY: float = -1000.0
 const GRAVITY: float = 2000.0
 const DASH_SPEED: float = 1400.0
 const DASH_TIME: float = 0.3
@@ -20,8 +20,6 @@ const SLIDE_TIME := 0.8
 @export var landing_dust_scene: PackedScene = preload("res://scenes/vfx/landing_dust.tscn")
 @export var landing_dust_offset: Vector2 = Vector2(0, 70)
 
-
-
 # --- STATE ---
 var is_dashing: bool = false
 var can_dash: bool = true
@@ -29,6 +27,9 @@ var is_attacking: bool = false
 var attack_alt: bool = false # Toggle for alternating attacks
 var dash_timer: float = 0.0
 var dash_dir: int = 1
+
+var max_jumps = 2
+var jump_count = 0
 
 # --- STYLE SYSTEM ---
 var current_style: GameEnums.Style = GameEnums.Style.NONE
@@ -40,6 +41,39 @@ var current_style: GameEnums.Style = GameEnums.Style.NONE
 # --- STATE ---
 var is_sliding := false
 
+# --- COYOTE TIME ---
+const COYOTE_TIME := 0.15
+var coyote_timer := 0.0
+
+# --- JUMP BUFFERING ---
+const JUMP_BUFFER_TIME := 0.1
+var jump_buffer_timer := 0.0
+
+
+
+func _process(_delta):
+	# 1. Get the direction from the player to the mouse
+	var mouse_pos = get_global_mouse_position()
+	
+	# 2. Make the pivot point toward that position
+	$SwordPivot.look_at(mouse_pos)
+	
+	# 3. Call the orientation function (You must call it for it to work!)
+	update_sword_orientation(mouse_pos)
+
+func update_sword_orientation(mouse_pos):
+	# Check if mouse is to the left or right of the player
+	if mouse_pos.x < global_position.x:
+		# Match '$Sprite' to your screenshot name
+		$Sprite.flip_h = true 
+		# Access the sprite inside your SwordArea
+		if $SwordPivot/SwordArea/Sprite2D:
+			$SwordPivot/SwordArea/Sprite2D.flip_v = true
+	else:
+		$Sprite.flip_h = false
+		if $SwordPivot/SwordArea/Sprite2D:
+			$SwordPivot/SwordArea/Sprite2D.flip_v = false
+
 func _has_anim(anim_name: StringName) -> bool:
 	if anim == null:
 		return false
@@ -47,6 +81,34 @@ func _has_anim(anim_name: StringName) -> bool:
 	if frames == null:
 		return false
 	return frames.has_animation(anim_name)
+
+# Ensure this matches your SwordArea's starting X position in the editor
+const SWORD_IDLE_X = 40.0 
+
+func thrust_attack():
+	is_attacking = true
+	
+	# Calculate Direction
+	var mouse_pos = get_global_mouse_position()
+	var mouse_dir = (mouse_pos - global_position).normalized()
+	
+	# Apply Recoil: 1000 is a good starting point for a noticeable bump
+	var recoil_strength = 500.0 
+	velocity = -mouse_dir * recoil_strength 
+	
+	# Sword Animation
+	var tween = create_tween()
+	# Move sword forward relative to its pivot
+	tween.tween_property($SwordPivot/SwordArea, "position:x", 100.0, 0.1)\
+		.set_trans(Tween.TRANS_QUART)\
+		.set_ease(Tween.EASE_OUT)
+		
+	# Move sword back
+	tween.tween_property($SwordPivot/SwordArea, "position:x", SWORD_IDLE_X, 0.15)\
+		.set_trans(Tween.TRANS_SINE)
+	
+	# Reset state when the sword is back
+	tween.finished.connect(func(): is_attacking = false)
 
 
 func _events() -> Node:
@@ -69,6 +131,8 @@ func _input(event: InputEvent) -> void:
 		change_style(GameEnums.Style.MISSILES)
 	elif event.is_action_pressed("stance_rock"):
 		change_style(GameEnums.Style.MAGIC)
+	if event.is_action_pressed("secondary_attack") and not is_attacking:
+		thrust_attack()
 
 func change_style(new_style: GameEnums.Style) -> void:
 	current_style = new_style
@@ -237,6 +301,14 @@ func _physics_process(delta: float) -> void:
 	var was_on_floor_now: bool = is_on_floor()
 	apply_gravity(delta)
 
+	# Update coyote timer
+	if is_on_floor():
+		coyote_timer = COYOTE_TIME
+	else:
+		coyote_timer -= delta
+	
+	apply_gravity(delta)
+
 	if is_dashing:
 		process_dash(delta)
 	else:
@@ -254,6 +326,9 @@ func _physics_process(delta: float) -> void:
 		_spawn_landing_dust()
 	# Aim the sword pivot at the mouse cursor
 
+	if is_on_floor():
+		jump_count = 0
+
 # --- GRAVITY ---
 func apply_gravity(delta: float) -> void:
 	if not is_on_floor() and not is_dashing:
@@ -261,15 +336,14 @@ func apply_gravity(delta: float) -> void:
 
 # --- LEFT / RIGHT ---
 func handle_movement() -> void:
-	if is_dashing:
+	if is_dashing or is_attacking: # Added 'is_attacking' guard here!
 		return
 
 	var direction: float = Input.get_axis("move_left", "move_right")
 	velocity.x = direction * SPEED
 
-	if direction != 0.0 and not is_attacking:
+	if direction != 0.0:
 		anim.flip_h = direction < 0.0
-		# Flip the hitbox's position to match the direction
 		$SwordHitbox.scale.x = -1 if direction < 0.0 else 1
 
 # --- JUMP ---
@@ -277,8 +351,18 @@ func handle_jump() -> void:
 	if is_dashing:
 		return
 
-	if Input.is_action_just_pressed("move_jump") and is_on_floor():
-		velocity.y = JUMP_VELOCITY
+	if Input.is_action_just_pressed("move_jump"):
+		jump_buffer_timer = JUMP_BUFFER_TIME
+	jump_buffer_timer -= get_physics_process_delta_time()
+
+	if Input.is_action_just_pressed("move_jump"):
+		if (is_on_floor() or coyote_timer > 0.0) and jump_count == 0:
+			velocity.y = JUMP_VELOCITY
+			jump_count += 1
+			coyote_timer = 0.0
+		elif jump_count < max_jumps:
+			velocity.y = JUMP_VELOCITY
+			jump_count += 1
 
 # --- DASH ---
 func handle_dash() -> void:
@@ -291,10 +375,13 @@ func handle_dash() -> void:
 		dash_timer = 0.0
 		dash_dir = -1 if anim.flip_h else 1
 
+		if not is_on_floor():
+			velocity.y = -200.0  # Neutralize vertical velocity when dashing in air
+
 		var dash_sounds = [
 			"res://assets/audio/sfx/dash.1.wav",
 			"res://assets/audio/sfx/dash.2.wav",
-            "res://assets/audio/sfx/dash.3.wav"
+			"res://assets/audio/sfx/dash.3.wav"
 		]
 		
 		var random_dash_sfx = dash_sounds.pick_random()
@@ -391,6 +478,9 @@ func handle_slide():
 		is_sliding = false
 		collision_shape.position.y = 21
 		collision_shape.scale.y = 1.0
+
+		# Maintain some momentum after slide
+		velocity.x = slide_dir * SPEED * 0.6
 
 func play_sfx(sound_path: String):
 	var p = AudioStreamPlayer.new()

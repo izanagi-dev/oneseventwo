@@ -1,4 +1,4 @@
-[gd_scene load_steps=65 format=3 uid="uid://qxmyyibtpfdp"]
+[gd_scene load_steps=67 format=3 uid="uid://qxmyyibtpfdp"]
 
 [ext_resource type="Script" uid="uid://rw3icighuej" path="res://scripts/player.gd" id="1_lvxji"]
 [ext_resource type="Texture2D" uid="uid://cakfa1sraeg1r" path="res://assets/player/Martial Hero/Sprites/Attack1.png" id="2_5gtgg"]
@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://bmk6nk3vha4qk" path="res://assets/player/Martial Hero/Sprites/Take Hit.png" id="8_fcs02"]
 [ext_resource type="Texture2D" uid="uid://gpx0ithfmnl7" path="res://assets/player/Martial Hero/Sprites/Slide.png" id="8_gx1jg"]
 [ext_resource type="Texture2D" uid="uid://c0ostql1x3uap" path="res://assets/player/Martial Hero/Sprites/Run.png" id="9_myrg7"]
+[ext_resource type="Texture2D" uid="uid://bi386sx044fdi" path="res://assets/player/COUPON.png" id="14_ugbui"]
 [ext_resource type="Script" uid="uid://dg2pbw7d7l2ru" path="res://scripts/components/health_component.gd" id="health_script"]
 [ext_resource type="Script" uid="uid://dm1u7yykgv0u5" path="res://scripts/combat/hitbox.gd" id="hitbox_script"]
 [ext_resource type="Script" uid="uid://c2ii3xnpp60o3" path="res://scripts/combat/hurtbox.gd" id="hurtbox_script"]
@@ -392,13 +393,22 @@ size = Vector2(236.76373, 20.58815)
 
 [sub_resource type="AudioStream" id="AudioStream_fm80t"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gx1jg"]
+size = Vector2(145.58762, 81.543785)
+
 [node name="Player" type="CharacterBody2D" groups=["player"]]
 position = Vector2(1, 0)
 scale = Vector2(0.68000287, 0.68000287)
 collision_layer = 2
 script = ExtResource("1_lvxji")
+death_restart_delay = null
+landing_dust_scene = null
+landing_dust_offset = null
+health_path = null
+hurtbox_path = null
 
 [node name="Stance" type="Sprite2D" parent="."]
+visible = false
 position = Vector2(-7.8947144, 63.157715)
 scale = Vector2(1.5624956, 1.5624956)
 texture = SubResource("GradientTexture2D_h17s1")
@@ -406,8 +416,7 @@ texture = SubResource("GradientTexture2D_h17s1")
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
 scale = Vector2(3.5234675, 3.5234675)
 sprite_frames = SubResource("SpriteFrames_m2mll")
-animation = &"move_slide"
-frame_progress = 0.21105546
+animation = &"idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 visible = false
@@ -419,6 +428,7 @@ shape = SubResource("RectangleShape2D_gmlin")
 script = ExtResource("health_script")
 
 [node name="Hurtbox" type="Area2D" parent="." groups=["player_hurtbox"]]
+visible = false
 collision_layer = 4
 collision_mask = 8
 script = ExtResource("hurtbox_script")
@@ -428,6 +438,7 @@ position = Vector2(1.447393, 21.130003)
 shape = SubResource("RectangleShape2D_yx3jh")
 
 [node name="SwordHitbox" type="Area2D" parent="."]
+visible = false
 collision_layer = 0
 collision_mask = 4
 script = ExtResource("hitbox_script")
@@ -443,3 +454,19 @@ disabled = true
 [node name="Dash" type="AudioStreamPlayer" parent="."]
 stream = SubResource("AudioStream_fm80t")
 bus = &"SFX"
+
+[node name="SwordPivot" type="Node2D" parent="."]
+position = Vector2(-1.470582, -10.294075)
+
+[node name="SwordArea" type="Area2D" parent="SwordPivot"]
+position = Vector2(79.41143, 7.3529105)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SwordPivot/SwordArea"]
+texture_filter = 1
+position = Vector2(65.440895, -9.227896)
+shape = SubResource("RectangleShape2D_gx1jg")
+
+[node name="Sprite2D" type="Sprite2D" parent="SwordPivot/SwordArea"]
+position = Vector2(64.70561, -10.294074)
+scale = Vector2(3, 3)
+texture = ExtResource("14_ugbui")
